@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Study Materials - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Study Materials</li>
+        </ol>
+    </nav>
+
+    {% if materials_by_subject %}
+        <div class="row">
+            <!-- Subject Navigation -->
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Subjects</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="subject-list">
+                            {% for subject in materials_by_subject.keys() %}
+                                <a href="#subject-{{ subject.id }}" 
+                                   class="list-group-item list-group-item-action"
+                                   data-bs-toggle="list">
+                                    {{ subject.name }}
+                                    <span class="badge bg-primary float-end">
+                                        {{ materials_by_subject[subject]|length }}
+                                    </span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Content -->
+            <div class="col-md-9">
+                <div class="tab-content">
+                    {% for subject, materials in materials_by_subject.items() %}
+                        <div class="tab-pane fade" id="subject-{{ subject.id }}">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">{{ subject.name }} Materials</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for material in materials %}
+                                            <div class="col-md-6 mb-4">
+                                                <div class="card h-100">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ material.title }}</h5>
+                                                        <p class="card-text">{{ material.content }}</p>
+                                                        {% if material.file_path %}
+                                                            <a href="{{ url_for('static', filename='uploads/' + material.file_path) }}" 
+                                                               class="btn btn-primary btn-sm" 
+                                                               target="_blank">
+                                                                <i class="fas fa-download me-1"></i> Download
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="card-footer text-muted">
+                                                        <small>Added: {{ material.created_at.strftime('%Y-%m-%d') if material.created_at else 'N/A' }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <h5>No Study Materials Available</h5>
+                <p class="text-muted">Check back later for study materials.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Activate the first subject tab by default
+    const firstTab = document.querySelector('#subject-list .list-group-item');
+    if (firstTab) {
+        firstTab.click();
+    }
+});
+</script>
+{% endblock %} 

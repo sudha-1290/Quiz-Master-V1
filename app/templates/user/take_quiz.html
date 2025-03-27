@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>{{ quiz.title }}</h2>
+            <div class="timer-container">
+                <div class="timer-display bg-primary text-white p-3 rounded">
+                    <h3 class="mb-0" id="timer">00:00</h3>
+                    <small>Time Remaining</small>
+                </div>
+            </div>
+        </div>
+        <p class="mb-0">Duration: {{ quiz.duration }} minutes | Total Marks: {{ quiz.total_marks }}</p>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('user.submit_quiz', quiz_id=quiz.id) }}" id="quizForm">
+            <div class="progress mb-4">
+                <div class="progress-bar" role="progressbar" id="questionProgress" 
+                     style="width: 0%" 
+                     aria-valuenow="0" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    Question Progress
+                </div>
+            </div>
+
+            {% for question in questions %}
+            <div class="question-container mb-4 p-3 border rounded {% if not loop.first %}d-none{% endif %}" 
+                 id="question_{{ loop.index }}" 
+                 data-question-number="{{ loop.index }}">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Question {{ loop.index }} of {{ questions|length }}</h5>
+                    <span class="badge bg-primary">Marks: {{ question.marks }}</span>
+                </div>
+                
+                <p class="question-text mb-3">{{ question.question_text }}</p>
+                
+                <div class="options">
+                    {% for option_num in range(1, 5) %}
+                    {% set option = question|attr('option' ~ option_num) %}
+                    <div class="option-container mb-2">
+                        <div class="form-check">
+                            <input type="radio" 
+                                   name="question_{{ question.id }}" 
+                                   value="{{ option_num }}" 
+                                   class="form-check-input question-option"
+                                   id="q{{ question.id }}_opt{{ option_num }}"
+                                   required>
+                            <label class="form-check-label" for="q{{ question.id }}_opt{{ option_num }}">
+                                {{ option }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="navigation-buttons mt-4">
+                    {% if not loop.first %}
+                    <button type="button" class="btn btn-secondary prev-question">Previous</button>
+                    {% endif %}
+                    
+                    {% if loop.last %}
+                    <button type="submit" class="btn btn-success float-end">Submit Quiz</button>
+                    {% else %}
+                    <button type="button" class="btn btn-primary float-end next-question">Next</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Timer functionality
+    const duration = {{ quiz.duration }} * 60; // Convert to seconds
+    let timeLeft = duration;
+    const timerElement = document.getElementById('timer');
+    const quizForm = document.getElementById('quizForm');
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert('Time is up! Submitting quiz...');
+            quizForm.submit();
+        }
+        
+        // Update color based on time remaining
+        if (timeLeft <= 60) { // Last minute
+            timerElement.parentElement.classList.replace('bg-primary', 'bg-danger');
+        } else if (timeLeft <= 180) { // Last 3 minutes
+            timerElement.parentElement.classList.replace('bg-primary', 'bg-warning');
+        }
+        
+        timeLeft--;
+    }
+    
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // Initial call
+
+    // Question navigation
+    const questions = document.querySelectorAll('.question-container');
+    const totalQuestions = questions.length;
+    let currentQuestion = 1;
+
+    function updateProgress() {
+        const progress = (currentQuestion / totalQuestions) * 100;
+        const progressBar = document.getElementById('questionProgress');
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+        progressBar.textContent = `Question ${currentQuestion} of ${totalQuestions}`;
+    }
+
+    function showQuestion(questionNumber) {
+        questions.forEach(q => q.classList.add('d-none'));
+        document.getElementById(`question_${questionNumber}`).classList.remove('d-none');
+        currentQuestion = questionNumber;
+        updateProgress();
+    }
+
+    // Next button functionality
+    document.querySelectorAll('.next-question').forEach(button => {
+        button.addEventListener('click', () => {
+            const currentContainer = document.getElementById(`question_${currentQuestion}`);
+            const options = currentContainer.querySelectorAll('input[type="radio"]');
+            const isAnswered = Array.from(options).some(option => option.checked);
+            
+            if (!isAnswered) {
+                alert('Please select an answer before proceeding.');
+                return;
+            }
+            
+            if (currentQuestion < totalQuestions) {
+                showQuestion(currentQuestion + 1);
+            }
+        });
+    });
+
+    // Previous button functionality
+    document.querySelectorAll('.prev-question').forEach(button => {
+        button.addEventListener('click', () => {
+            if (currentQuestion > 1) {
+                showQuestion(currentQuestion - 1);
+            }
+        });
+    });
+
+    // Form submission
+    quizForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // Check if all questions are answered
+        const unansweredQuestions = Array.from(questions).filter(question => {
+            const options = question.querySelectorAll('input[type="radio"]');
+            return !Array.from(options).some(option => option.checked);
+        });
+
+        if (unansweredQuestions.length > 0) {
+            alert(`Please answer all questions before submitting. ${unansweredQuestions.length} question(s) remaining.`);
+            showQuestion(parseInt(unansweredQuestions[0].dataset.questionNumber));
+            return;
+        }
+
+        // Confirm submission
+        if (confirm('Are you sure you want to submit the quiz?')) {
+            quizForm.submit();
+        }
+    });
+
+    // Initialize progress bar
+    updateProgress();
+});
+</script>
+<style>
+.timer-display {
+    text-align: center;
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.question-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.option-container {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.option-container:hover {
+    background-color: #e9ecef;
+    cursor: pointer;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: bold;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress {
+    height: 25px;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %} 

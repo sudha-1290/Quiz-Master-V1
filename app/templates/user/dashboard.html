@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Progress Overview Card -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Your Progress Overview</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="progress-stat text-center">
+                            <h2 class="display-4">{{ completed_quizzes|length }}</h2>
+                            <p>Quizzes Completed</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="progress-stat text-center">
+                            <h2 class="display-4">
+                                {% if completed_quizzes %}
+                                    {{ "%.1f"|format(completed_quizzes|map(attribute='score')|sum / completed_quizzes|length) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h2>
+                            <p>Average Score</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="progress-stat text-center">
+                            <h2 class="display-4">{{ achievements|length }}</h2>
+                            <p>Achievements Earned</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="progress-stat text-center">
+                            <h2 class="display-4">
+                                {% if completed_quizzes %}
+                                    {{ "%.1f"|format(completed_quizzes|selectattr('score', 'ge', 80)|list|length / completed_quizzes|length * 100) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h2>
+                            <p>Success Rate (≥80%)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Available Quizzes Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Available Quizzes</h3>
+                <div id="quiz-timer" class="badge bg-primary p-2" style="display: none;">
+                    Time Left: <span id="timer">00:00</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Quiz Title</th>
+                                <th>Subject</th>
+                                <th>Duration</th>
+                                <th>Total Marks</th>
+                                <th>Best Score</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quiz in available_quizzes %}
+                            <tr>
+                                <td>{{ quiz.title }}</td>
+                                <td>{{ quiz.subject.name }}</td>
+                                <td>{{ quiz.duration }} minutes</td>
+                                <td>{{ quiz.total_marks }}</td>
+                                <td>
+                                    {% set best_score = completed_quizzes|selectattr('quiz_id', 'eq', quiz.id)|map(attribute='score')|max|default(0) %}
+                                    {% if best_score > 0 %}
+                                        <span class="badge bg-success">{{ "%.1f"|format(best_score) }}%</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Not attempted</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('user.take_quiz', quiz_id=quiz.id) }}" 
+                                       class="btn btn-primary btn-sm">Take Quiz</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No quizzes available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz History with Progress Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Your Progress Chart</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Quiz History Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Recent Quiz History</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Result</th>
+                                <th>Attempt Date</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in completed_quizzes %}
+                            <tr>
+                                <td>{{ score.quiz.title }}</td>
+                                <td>{{ "%.1f"|format(score.score) }}%</td>
+                                <td>
+                                    {% if score.score >= 80 %}
+                                        <span class="badge bg-success">Excellent</span>
+                                    {% elif score.score >= 60 %}
+                                        <span class="badge bg-info">Good</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ score.attempt_date|strftime }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="showQuizDetails({{ score.id }})">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No quizzes attempted yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Achievements Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Your Achievements</h3>
+            </div>
+            <div class="card-body">
+                {% for achievement in achievements %}
+                <div class="achievement-item mb-3 p-3 border rounded">
+                    <div class="d-flex align-items-center">
+                        <i class="fas {{ achievement.badge_icon }} fa-2x me-3 text-primary"></i>
+                        <div>
+                            <h5 class="mb-1">{{ achievement.name }}</h5>
+                            <p class="mb-1">{{ achievement.description }}</p>
+                            <small class="text-muted">Earned on: {{ achievement.earned_date.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center">No achievements yet. Keep taking quizzes!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Progress Goals Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Learning Goals</h3>
+            </div>
+            <div class="card-body">
+                {% set total_quizzes = available_quizzes|length %}
+                {% set completed = completed_quizzes|length %}
+                {% set completion_rate = (completed / total_quizzes * 100) if total_quizzes > 0 else 0 %}
+                
+                <h5>Overall Progress</h5>
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: {{ completion_rate }}%"
+                         aria-valuenow="{{ completion_rate }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ "%.0f"|format(completion_rate) }}%
+                    </div>
+                </div>
+
+                <div class="goals-list">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Quizzes Completed</span>
+                        <span>{{ completed }}/{{ total_quizzes }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Perfect Scores</span>
+                        <span>{{ completed_quizzes|selectattr('score', 'eq', 100)|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Achievements Unlocked</span>
+                        <span>{{ achievements|length }}/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Materials Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Study Materials</h3>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                <h5>Access Learning Resources</h5>
+                <p class="text-muted">Access learning resources for all subjects</p>
+                <a href="{{ url_for('user.view_study_materials') }}" class="btn btn-primary">
+                    <i class="fas fa-book-reader me-1"></i> View Materials
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Details Modal -->
+<div class="modal fade" id="quizDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quiz Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="quizDetailsContent">
+                Loading...
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Progress Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const scores = {{ completed_quizzes|map(attribute='score')|list|tojson }};
+    const dates = {{ completed_quizzes|map(attribute='attempt_date')|map('strftime', '%Y-%m-%d')|list|tojson }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Quiz Scores',
+                data: scores,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+
+// Quiz Details Modal
+function showQuizDetails(scoreId) {
+    const modal = new bootstrap.Modal(document.getElementById('quizDetailsModal'));
+    // Here you would typically make an AJAX call to get the quiz details
+    // For now, we'll just show a placeholder
+    document.getElementById('quizDetailsContent').innerHTML = `
+        <div class="text-center">
+            <h4>Score ID: ${scoreId}</h4>
+            <p>Detailed quiz information would be shown here.</p>
+        </div>
+    `;
+    modal.show();
+}
+
+// Active Quiz Timer
+function startQuizTimer(duration) {
+    const timerElement = document.getElementById('timer');
+    const timerContainer = document.getElementById('quiz-timer');
+    let timeLeft = duration;
+
+    timerContainer.style.display = 'block';
+    
+    const timerInterval = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        timerElement.textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerContainer.style.display = 'none';
+        }
+        timeLeft--;
+    }, 1000);
+}
+</script>
+{% endblock %} Error loading progress: 'Score' object has no attribute 'time_taken'

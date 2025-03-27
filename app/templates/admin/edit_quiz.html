@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Quiz - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_subjects') }}">Subjects</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.subject_quizzes', subject_id=quiz.subject_id) }}">{{ quiz.subject.name }} Quizzes</a></li>
+            <li class="breadcrumb-item active">Edit Quiz</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Edit Quiz</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.duration.label(class="form-label") }}
+                        {{ form.duration(class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.total_marks.label(class="form-label") }}
+                        {{ form.total_marks(class="form-control") }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.difficulty.label(class="form-label") }}
+                        {{ form.difficulty(class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.category.label(class="form-label") }}
+                        {{ form.category(class="form-control") }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.passing_percentage.label(class="form-label") }}
+                        {{ form.passing_percentage(class="form-control") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_public(class="form-check-input") }}
+                        {{ form.is_public.label(class="form-check-label") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.time_limit_enforced(class="form-check-input") }}
+                        {{ form.time_limit_enforced.label(class="form-check-label") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.allow_review(class="form-check-input") }}
+                        {{ form.allow_review.label(class="form-check-label") }}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin.subject_quizzes', subject_id=quiz.subject_id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

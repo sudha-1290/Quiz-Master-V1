@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <!-- Statistics Cards -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                    <h5 class="card-title">Total Users</h5>
+                    <h3 class="card-text">{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-2x text-success mb-3"></i>
+                    <h5 class="card-title">Total Subjects</h5>
+                    <h3 class="card-text">{{ total_subjects }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-question-circle fa-2x text-info mb-3"></i>
+                    <h5 class="card-title">Total Quizzes</h5>
+                    <h3 class="card-text">{{ total_quizzes }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                    <h5 class="card-title">Average Score</h5>
+                    <h3 class="card-text">{{ average_score|default('0.0') }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Scores -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Quiz Attempts</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_scores %}
+                        <div class="list-group">
+                            {% for score in recent_scores %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ score.user.full_name }}</h6>
+                                        <small>{{ score.attempt_date.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ score.quiz.title }}</p>
+                                    <small>Score: {{ "%.1f"|format(score.score) }}%</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-3">No recent quiz attempts</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.manage_subjects') }}" class="btn btn-primary">
+                            <i class="fas fa-book me-2"></i>Manage Subjects
+                        </a>
+                        <a href="{{ url_for('admin.manage_study_materials') }}" class="btn btn-success">
+                            <i class="fas fa-file-alt me-2"></i>Manage Study Materials
+                        </a>
+                        <a href="{{ url_for('admin.quiz_analytics') }}" class="btn btn-info">
+                            <i class="fas fa-chart-bar me-2"></i>View Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Performance Chart -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quiz Performance Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="quizPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('quizPerformanceChart').getContext('2d');
+    const quizStats = {{ quiz_stats|tojson }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: quizStats.map((_, index) => `Quiz ${index + 1}`),
+            datasets: [{
+                label: 'Average Score (%)',
+                data: quizStats.map(stat => stat[1]),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Attempts',
+                data: quizStats.map(stat => stat[2]),
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                yAxisID: 'attempts'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Average Score (%)'
+                    }
+                },
+                attempts: {
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Attempts'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

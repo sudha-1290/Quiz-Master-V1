@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Result - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Quiz Results</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if score.score >= 80 %}
+                            <div class="display-1 text-success mb-3">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                        {% elif score.score >= 60 %}
+                            <div class="display-1 text-primary mb-3">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                        {% else %}
+                            <div class="display-1 text-warning mb-3">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <h3 class="display-4 mb-3">{{ "%.1f"|format(score.score) }}%</h3>
+                        
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar {% if score.score >= 80 %}bg-success
+                                                    {% elif score.score >= 60 %}bg-primary
+                                                    {% else %}bg-warning{% endif %}"
+                                 role="progressbar"
+                                 style="width: {{ score.score }}%"
+                                 aria-valuenow="{{ score.score }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ "%.1f"|format(score.score) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-details">
+                        {% if score.quiz %}
+                            <h4>{{ score.quiz.title }}</h4>
+                            <p class="text-muted">Attempted on: {{ score.attempt_date|strftime }}</p>
+                            
+                            <div class="result-stats mt-4">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <h5>Subject</h5>
+                                        <p>{{ score.quiz.subject.name if score.quiz.subject else 'N/A' }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5>Duration</h5>
+                                        <p>{{ score.quiz.duration }} minutes</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5>Total Marks</h5>
+                                        <p>{{ score.quiz.total_marks }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                Quiz details not available
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+                        {% if score.quiz %}
+                            <a href="{{ url_for('user.take_quiz', quiz_id=score.quiz.id) }}" 
+                               class="btn btn-outline-primary">Retake Quiz</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

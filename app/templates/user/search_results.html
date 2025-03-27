@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Search Quizzes - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Search Quizzes</li>
+        </ol>
+    </nav>
+
+    <!-- Search Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="q" class="form-control" 
+                           value="{{ query }}" placeholder="Search quizzes...">
+                </div>
+                <div class="col-md-3">
+                    <select name="subject" class="form-select">
+                        <option value="">All Subjects</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.id }}" 
+                                    {% if selected_subject|string == subject.id|string %}selected{% endif %}>
+                                {{ subject.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="difficulty" class="form-select">
+                        <option value="">All Difficulties</option>
+                        <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    {% if quizzes %}
+        <div class="row">
+            {% for quiz in quizzes %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ quiz.title }}</h5>
+                            <p class="card-text">Subject: {{ quiz.subject.name }}</p>
+                            <div class="mb-3">
+                                <span class="badge bg-{{ 'success' if quiz.difficulty == 'easy' else 'warning' if quiz.difficulty == 'medium' else 'danger' }}">
+                                    {{ quiz.difficulty|title }}
+                                </span>
+                                <span class="badge bg-info">{{ quiz.duration }} mins</span>
+                                <span class="badge bg-secondary">{{ quiz.total_marks }} marks</span>
+                            </div>
+                            <a href="{{ url_for('user.take_quiz', quiz_id=quiz.id) }}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-play me-1"></i> Take Quiz
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No quizzes found matching your criteria.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

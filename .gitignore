@@ -1,0 +1,9 @@
+instance/
+*.pyc
+__pycache__/
+.env
+*.db
+app/static/uploads/*
+app/static/profile_pics/*
+app/static/reports/*
+!app/static/profile_pics/default.png 

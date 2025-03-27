@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3>Quiz Review: {{ quiz.title }}</h3>
+        </div>
+        <div class="card-body">
+            {% for question in questions %}
+            <div class="question-review mb-4">
+                <h5>Question {{ loop.index }}</h5>
+                <p>{{ question.question_text }}</p>
+                
+                <div class="options">
+                    {% for i in range(1, 5) %}
+                    <div class="option {% if i == question.correct_answer %}correct{% endif %} 
+                                     {% if answers.get(question.id)|int == i %}selected{% endif %}">
+                        {{ question['option' ~ i] }}
+                        {% if i == question.correct_answer %}
+                            <span class="badge bg-success">Correct Answer</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

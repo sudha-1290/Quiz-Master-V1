@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Analytics - Quiz Master{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Analytics</li>
+        </ol>
+    </nav>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-2x text-primary mb-3"></i>
+                    <h5 class="card-title">Total Attempts</h5>
+                    <h3 class="card-text">{{ total_attempts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x text-success mb-3"></i>
+                    <h5 class="card-title">Average Score</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(avg_score) }}%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-info mb-3"></i>
+                    <h5 class="card-title">Active Users</h5>
+                    <h3 class="card-text">{{ user_engagement|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Subject Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="subjectChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Engagement -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">User Engagement (Last 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Subject Performance Chart
+    const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+    const subjectStats = {{ subject_stats|tojson }};
+    
+    new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+            labels: subjectStats.map(stat => stat[0]),
+            datasets: [{
+                label: 'Average Score (%)',
+                data: subjectStats.map(stat => stat[2]),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Attempts',
+                data: subjectStats.map(stat => stat[1]),
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                yAxisID: 'attempts'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Average Score (%)'
+                    }
+                },
+                attempts: {
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Attempts'
+                    }
+                }
+            }
+        }
+    });
+
+    // User Engagement Chart
+    const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+    const engagementData = {{ user_engagement|tojson }};
+    
+    new Chart(engagementCtx, {
+        type: 'line',
+        data: {
+            labels: engagementData.map(data => data[0]),
+            datasets: [{
+                label: 'Daily Attempts',
+                data: engagementData.map(data => data[1]),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Attempts'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

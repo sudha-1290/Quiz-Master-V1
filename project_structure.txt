@@ -1,0 +1,80 @@
+quiz_master/
+│
+├── app/
+│   ├── __init__.py
+│   ├── extensions.py
+│   ├── forms.py
+│   ├── routes.py
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── achievement.py
+│   │   ├── feedback.py
+│   │   ├── progress.py
+│   │   ├── question.py
+│   │   ├── quiz.py
+│   │   ├── score.py
+│   │   ├── statistics.py
+│   │   ├── study_material.py
+│   │   ├── subject.py
+│   │   └── user.py
+│   │
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── js/
+│   │   │   └── main.js
+│   │   ├── uploads/
+│   │   ├── profile_pics/
+│   │   │   └── default.png
+│   │   ├── reports/
+│   │   └── favicon.ico
+│   │
+│   └── templates/
+│       ├── base.html
+│       │
+│       ├── admin/
+│       │   ├── analytics.html
+│       │   ├── create_quiz.html
+│       │   ├── dashboard.html
+│       │   ├── edit_quiz.html
+│       │   ├── edit_subject.html
+│       │   ├── profile.html
+│       │   ├── questions.html
+│       │   ├── study_materials.html
+│       │   ├── subject_quizzes.html
+│       │   └── subjects.html
+│       │
+│       ├── auth/
+│       │   ├── login.html
+│       │   ├── register.html
+│       │   ├── reset_password.html
+│       │   └── reset_password_request.html
+│       │
+│       └── user/
+│           ├── dashboard.html
+│           ├── leaderboard.html
+│           ├── profile.html
+│           ├── progress.html
+│           ├── quiz_result.html
+│           ├── review_quiz.html
+│           ├── search_results.html
+│           └── take_quiz.html
+│
+├── instance/
+│   └── config.py
+│
+├── migrations/
+│   └── versions/
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_auth.py
+│   ├── test_models.py
+│   └── test_routes.py
+│
+├── .gitignore
+├── config.py
+├── requirements.txt
+├── run.py
+└── README.md 
