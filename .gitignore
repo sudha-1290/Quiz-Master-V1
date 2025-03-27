@@ -2,6 +2,7 @@ instance/
 *.pyc
 __pycache__/
 .env
+venv/
 *.db
 app/static/uploads/*
 app/static/profile_pics/*
