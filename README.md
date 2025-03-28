@@ -127,7 +127,7 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'}
 ## Usage
 
 ### Administrator Account
-- Email: admin@example.com
+- Email: admin@quizmaster.com
 - Password: admin123
 
 ### Regular User
